@@ -2,9 +2,9 @@ from struct import unpack
 
 def parse_abilities(abilities):
     return [
-        abilities >> 24 & 0x7f,
-        abilities >> 17 & 0x7f,
-        (abilities >> 10 & 0x3f) | (abilities & 1) << 6
+        abilities & 0x7f,
+        abilities >> 9 & 0x7f,
+        abilities >> 18 & 0x7f
     ]
 
 ability_data = open('/tmp/conquest/fsroot/data/Tokusei.dat', 'rb')
@@ -16,7 +16,7 @@ for ability in range(128):
     ability_names.append(name.rstrip(b'\x00').decode('ASCII'))
 
 for pokemon in range(200):
-    name, abilities = unpack('>11s13xL20x', pokemon_data.read(0x30))
+    name, abilities = unpack('<11s13xL20x', pokemon_data.read(0x30))
     name = name.rstrip(b'\x00').decode('ASCII')
     abilities = [ability_names[a] for a in parse_abilities(abilities)]
 
