@@ -12,5 +12,8 @@ with open('/tmp/conquest/fsroot/data/Tokusei.dat', 'rb') as ability_data:
         abilities.append(_Ability(name, mystery))
 
 if __name__ == '__main__':
+    from binascii import hexlify
+
     for n, ability in enumerate(abilities):
-        print('{0:3}. {1}'.format(n, ability.name))
+        print('{0:3}. {1:15} {2}'.format(n, ability.name,
+          hexlify(ability.mystery).decode('ASCII')))
