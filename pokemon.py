@@ -1,6 +1,8 @@
 from collections import OrderedDict
 from struct import unpack
 
+from abilities import abilities
+
 def pokemon_parser(pokemon_struct):
     info = iter(unpack('<11sB6LQL', pokemon_struct))
 
@@ -72,13 +74,7 @@ def pokemon_parser(pokemon_struct):
     # Alphabetical order
     yield ('alphabetical_order', next(info))
 
-ability_data = open('/tmp/conquest/fsroot/data/Tokusei.dat', 'rb')
 pokemon_data = open('/tmp/conquest/fsroot/data/Pokemon.dat', 'rb')
-
-ability_names = []
-for ability in range(128):
-    name, = unpack('15s5x', ability_data.read(20))
-    ability_names.append(name.rstrip(b'\x00').decode('ASCII'))
 
 for pokemon in range(200):
     pokemon = OrderedDict(pokemon_parser(pokemon_data.read(0x30)))
