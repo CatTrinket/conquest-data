@@ -1,9 +1,27 @@
-from collections import OrderedDict
+from collections import namedtuple
 from struct import unpack
 
 from abilities import abilities
 
+# I KNOW this is brickish but I really don't like working with construct.
+Pokemon = namedtuple('Pokemon', [
+  'name', 'mystery_1', 'stat_hp', 'evo_condition_1', 'evo_condition_2',
+  'attack_animation_probably', 'mystery_2', 'stat_attack', 'stat_defense',
+  'stat_speed', 'is_legendary', 'mystery_flag_1', 'type_1', 'type_2',
+  'move', 'ability_1', 'ability_2', 'ability_3', 'evo_parameter_1',
+  'evo_parameter_2', 'range', 'mystery_flag_2', 'first_evolution',
+  'last_evolution', 'national_dex_no', 'habitat', 'alphabetical_order'
+])
+
 def pokemon_parser(pokemon_struct):
+    """Parse a Pokémon's data and yield it all as tuples for keyword assignment
+    to build a Pokemon.
+
+    This way, if anything gets mixed up, which is quite likely given that we're
+    putting together a brick in the form of a namedtuple, things won't silently
+    silently go wrong, and it's clear which value is being yielded.
+    """
+
     info = iter(unpack('<11sB6LQL', pokemon_struct))
 
     # Name
@@ -44,9 +62,11 @@ def pokemon_parser(pokemon_struct):
     # Abilities
     group = next(info)
     for ability in range(1, 4):
-        yield ('ability_{0}'.format(ability), group & 0x7f)
-        yield ('ability_{0}_is_placeholder'.format(ability),
-               bool(group & 0x80))
+        ability = 'ability_{0}'.format(ability)
+        if group & 0x80:
+            yield (ability, None)
+        else:
+            yield (ability, abilities[group & 0x7f])
         group >>= 9
     assert group == 0b01010
 
@@ -74,8 +94,17 @@ def pokemon_parser(pokemon_struct):
     # Alphabetical order
     yield ('alphabetical_order', next(info))
 
-pokemon_data = open('/tmp/conquest/fsroot/data/Pokemon.dat', 'rb')
+pokemon = []
 
-for pokemon in range(200):
-    pokemon = OrderedDict(pokemon_parser(pokemon_data.read(0x30)))
-    print(pokemon)
+with open('/tmp/conquest/fsroot/data/Pokemon.dat', 'rb') as pokemon_data:
+    for single_pokemon in range(200):
+        # Read each Pokémon's data, parse it, and package it
+        single_pokemon = pokemon_data.read(0x30)
+        single_pokemon = pokemon_parser(single_pokemon)
+        single_pokemon = dict(single_pokemon)
+        single_pokemon = Pokemon(**single_pokemon)
+        pokemon.append(single_pokemon)
+
+if __name__ == '__main__':
+    for single_pokemon in pokemon:
+        print(single_pokemon)
