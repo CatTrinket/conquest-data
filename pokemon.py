@@ -34,30 +34,30 @@ def pokemon_parser(pokemon_struct):
     group = next(info)
     def evo_condition(condition):
         return None if condition == 0b1001 else condition
-    yield ('stat_hp', group & 0x1ff)
-    yield ('evo_condition_1', evo_condition(group >> 10 & 0xf))
-    yield ('evo_condition_2', evo_condition(group >> 14 & 0xf))
-    yield ('attack_animation_probably', group >> 18 & 0xf)
+    yield ('stat_hp', group & 0x1FF)
+    yield ('evo_condition_1', evo_condition(group >> 10 & 0xF))
+    yield ('evo_condition_2', evo_condition(group >> 14 & 0xF))
+    yield ('attack_animation_probably', group >> 18 & 0xF)
     yield ('mystery_2', group >> 23)
 
     # The rest of the stats, mystery flags
     group = next(info)
     for stat in ('stat_attack', 'stat_defense', 'stat_speed'):
-        yield (stat, group & 0x1ff)
+        yield (stat, group & 0x1FF)
         group >>= 10
     yield ('is_legendary', bool(group & 1))
     yield ('mystery_flag_1', bool(group >> 1))
 
     # Types, move
     group = next(info)
-    yield ('type_1', group & 0x1f)
+    yield ('type_1', group & 0x1F)
 
-    type_2 = group >> 5 & 0x1f
+    type_2 = group >> 5 & 0x1F
     if type_2 == 0b11111:
         type_2 = None
     yield ('type_2', type_2)
 
-    yield ('move', group >> 10 & 0x7f)
+    yield ('move', group >> 10 & 0x7F)
 
     # Abilities
     group = next(info)
@@ -66,21 +66,23 @@ def pokemon_parser(pokemon_struct):
         if group & 0x80:
             yield (ability, None)
         else:
-            yield (ability, abilities[group & 0x7f])
+            yield (ability, abilities[group & 0x7F])
         group >>= 9
     assert group == 0b01010
 
     # Evolution, range, another mystery flag
     group = next(info)
-    yield ('evo_parameter_1', group & 0x1ff)
-    yield ('evo_parameter_2', group >> 18 & 0x1ff)
+    yield ('evo_parameter_1', group & 0x1FF)
+    yield ('evo_parameter_2', group >> 18 & 0x1FF)
     yield ('range', group >> 27 & 0b111)
     yield ('mystery_flag_2', bool(group >> 31))
 
     # Evolved forms, national dex number
     group = next(info)
-    yield ('first_evolution', (group & 0x7ff) + 1)
-    yield ('last_evolution', (group >> 11 & 0x7ff) + 1)
+    evo = group & 0x7FF
+    yield ('first_evolution', None if evo == 1400 else evo + 1)
+    evo = group >> 11 & 0x7FF
+    yield ('last_evolution', None if evo == 1400 else evo + 1)
     yield ('national_dex_no', group >> 22)
 
     # Habitat — this is the quad
@@ -107,4 +109,4 @@ with open('/tmp/conquest/fsroot/data/Pokemon.dat', 'rb') as pokemon_data:
 
 if __name__ == '__main__':
     for single_pokemon in pokemon:
-        print(single_pokemon)
+        print(single_pokemon, end='\n\n')
