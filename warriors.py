@@ -1,5 +1,6 @@
 from struct import unpack
 
+from common import decode_name, types
 from pokemon import pokemon
 
 class Warrior():
@@ -27,12 +28,10 @@ class Warrior():
         self.mystery_2 = group >> 15 & 0x1F
         self.mystery_3 = group >> 10 & 0x1F
         self.type_1 = types[group & 0x1F]
-
-        self.type_2 = group >> 5 & 0x1F
-        if self.type_2 == 0b11111:
+        try:
+            self.type_2 = types[group >> 5 & 0x1F]
+        except IndexError:
             self.type_2 = None
-        else:
-            self.type_2 = types[self.type_2]
 
         # Skills
         group = next(data)
@@ -61,22 +60,13 @@ class Warrior():
         if self.evo_parameter_2 == 0x1FF:
             self.evo_parameter_2 = None
 
-def format_str(str):
-    str = str.rstrip(b"\x00")
-    str = str.decode("Shift_JIS")
-    str = str.translate({1102: 333, 1087: 363})
-    return str
-
 genders = ["male", "female"]
-types = ["Normal", "Fire", "Water", "Electric", "Grass", "Ice", "Fighting",
-         "Poison", "Ground", "Flying", "Psychic", "Bug", "Rock", "Ghost",
-         "Dragon", "Dark", "Steel"]
 
 with open('/tmp/conquest/fsroot/data/Saihai.dat', 'rb') as skill_data:
     skills = []
     for skill in range(73):
         name, = unpack("19s9x", skill_data.read(28))
-        name = format_str(name)
+        name = decode_name(name)
         skills.append(name)
 
 with open('/tmp/conquest/fsroot/data/BaseBushou.dat', 'rb') as warrior_data:
@@ -85,7 +75,7 @@ with open('/tmp/conquest/fsroot/data/BaseBushou.dat', 'rb') as warrior_data:
     names = []
     for name in range(210):
         name, = unpack("11s1x", warrior_data.read(12))
-        name = format_str(name)
+        name = decode_name(name)
         names.append(name)
 
     warrior_data.seek(0)

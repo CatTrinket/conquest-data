@@ -1,35 +1,17 @@
 from struct import Struct
 
+from common import decode_name, types
+
 class Kingdom:
     struct = Struct('<11s13s')
-
-    # XXX Figure out where type names are, ideally
-    types = {
-        'Aurora': 'normal',
-        'Avia': 'flying',
-        'Chrysalia': 'bug',
-        'Cragspur': 'rock',
-        'Dragnor': 'dragon',
-        'Fontaine': 'water',
-        'Greenleaf': 'grass',
-        'Ignis': 'fire',
-        'Illusio': 'psychic',
-        'Nixtorm': 'ice',
-        'Pugilis': 'fighting',
-        'Spectra': 'ghost',
-        'Terrera': 'ground',
-        'Valora': 'steel',
-        'Violight': 'electric',
-        'Viperia': 'poison',
-        'Yaksha': 'dark'
-    }
+    types = iter(types)
 
     def __init__(self, raw_struct):
-        """Parse everything."""
+        """Parse everything.  Sort of."""
 
         self.name, self.mystery = self.struct.unpack(raw_struct)
-        self.name = self.name.decode('Shift_JIS').rstrip('\x00')
-        self.type = self.types[self.name]
+        self.name = decode_name(self.name)
+        self.type = next(self.types)
 
 
 kingdoms = []

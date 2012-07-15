@@ -2,6 +2,7 @@ from collections import namedtuple
 from struct import Struct
 
 from abilities import abilities
+from common import decode_name, types
 
 class Pokemon:
     struct = Struct('<11sB6LQL')
@@ -12,7 +13,7 @@ class Pokemon:
         info = iter(self.struct.unpack(raw_struct))
 
         # Name
-        self.name = next(info).decode('Shift_JIS').rstrip('\x00')
+        self.name = decode_name(next(info))
 
         # Mystery — generally lower for higher evolutions
         self.mystery_1 = next(info)
@@ -37,12 +38,11 @@ class Pokemon:
 
         # Types, move
         group = next(info)
-        self.type_1 = group & 0x1F
-
-        type_2 = group >> 5 & 0x1F
-        if type_2 == 0b11111:
-            type_2 = None
-        self.type_2 = type_2
+        self.type_1 = types[group & 0x1F]
+        try:
+            self.type_2 = types[group >> 5 & 0x1F]
+        except IndexError:
+            self.type_2 = None
 
         self.move = group >> 10 & 0x7F
 
