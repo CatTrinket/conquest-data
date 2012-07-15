@@ -72,40 +72,40 @@ types = ["Normal", "Fire", "Water", "Electric", "Grass", "Ice", "Fighting",
          "Poison", "Ground", "Flying", "Psychic", "Bug", "Rock", "Ghost",
          "Dragon", "Dark", "Steel"]
 
-skill_data = open("/tmp/conquest/fsroot/data/Saihai.dat", 'rb')
-skills = []
-for skill in range(73):
-    name, = unpack("19s9x", skill_data.read(28))
-    name = format_str(name)
-    skills.append(name)
+with open('/tmp/conquest/fsroot/data/Saihai.dat', 'rb') as skill_data:
+    skills = []
+    for skill in range(73):
+        name, = unpack("19s9x", skill_data.read(28))
+        name = format_str(name)
+        skills.append(name)
 
-warrior_data = open("/tmp/conquest/fsroot/data/BaseBushou.dat", 'rb')
-warrior_data.seek(5040)
+with open('/tmp/conquest/fsroot/data/BaseBushou.dat', 'rb') as warrior_data:
+    warrior_data.seek(5040)
 
-names = []
-for name in range(210):
-    name, = unpack("11s1x", warrior_data.read(12))
-    name = format_str(name)
-    names.append(name)
+    names = []
+    for name in range(210):
+        name, = unpack("11s1x", warrior_data.read(12))
+        name = format_str(name)
+        names.append(name)
 
-warrior_data.seek(0)
+    warrior_data.seek(0)
 
-warriors = []
-for warrior in range(252):
-    warrior = Warrior(warrior_data.read(20))
-    warriors.append(warrior)
+    warriors = []
+    for warrior in range(252):
+        warrior = Warrior(warrior_data.read(20))
+        warriors.append(warrior)
 
-warrior_id = []
-for warrior in warriors:
-    if warrior.name not in warrior_id:
-        warrior_id.append(warrior.name)
+    warrior_id = []
+    for warrior in warriors:
+        if warrior.name not in warrior_id:
+            warrior_id.append(warrior.name)
 
-episode_data = open("/tmp/conquest/fsroot/data/Episode.dat", 'rb')
-episodes = []
-for episode in range(38):
-    episode, = unpack("B7x", episode_data.read(8))
-    episode = warrior_id[episode]
-    episodes.append(episode)
+with open('/tmp/conquest/fsroot/data/Episode.dat', 'rb') as episode_data:
+    episodes = []
+    for episode in range(38):
+        episode, = unpack("B7x", episode_data.read(8))
+        episode = warrior_id[episode]
+        episodes.append(episode)
 
 if __name__ == "__main__":
     for warrior in warriors:
