@@ -10,14 +10,23 @@ class Warrior():
 
         # Link percentage to evolve, name, gender, mystery indexes
         group = next(data)
-        self.evo_link_percent = int(group >> 25)
-        self.name = names[group >> 17 & 0xFF]
-        self.gender = genders[group >> 16 & 1]
-        self.dialogue_id_maybe = int(group >> 8 & 0xFF)
         self.sprite_id_maybe = int(group & 0xFF)
+        self.dialogue_id_maybe = int(group >> 8 & 0xFF)
+        self.gender = genders[group >> 16 & 1]
+        self.name = names[group >> 17 & 0xFF]
+        self.evo_link_percent = int(group >> 25)
 
         # Mystery bytes, specialties
         group = next(data)
+
+        self.type_1 = types[group & 0x1F]
+        try:
+            self.type_2 = types[group >> 5 & 0x1F]
+        except IndexError:
+            self.type_2 = None
+
+        self.mystery_1 = group >> 10 & 0x1F
+        self.mystery_2 = group >> 15 & 0x1F
 
         self.evo_parameter_1 = group >> 20 & 0x1FF
         if self.evo_parameter_1 == 0x1FF:
@@ -25,16 +34,14 @@ class Warrior():
         else:
             self.evo_parameter_1 = pokemon[self.evo_parameter_1]
 
-        self.mystery_2 = group >> 15 & 0x1F
-        self.mystery_3 = group >> 10 & 0x1F
-        self.type_1 = types[group & 0x1F]
-        try:
-            self.type_2 = types[group >> 5 & 0x1F]
-        except IndexError:
-            self.type_2 = None
+        self.mystery_3 = group >> 29
 
-        # Skills
+        # Skills and evolution conditions
         group = next(data)
+
+        self.skill = skills[group & 0x7F]
+
+        self.mystery_4 = group >> 7 & 0x1FFFF
 
         self.evo_condition_1 = group >> 24 & 0xF
         if self.evo_condition_1 == 0b1101:
@@ -44,21 +51,24 @@ class Warrior():
         if self.evo_condition_2 == 0b1101:
             self.evo_condition_2 = None
 
-        self.skill = skills[group & 0x7F]
-
         # Stats
         group = next(data)
         self.power = group & 0x7F
         self.wisdom = group >> 7 & 0x7F
         self.charisma = group >> 14 & 0x7F
         self.capacity = group >> 21 & 0xF
-        self.mystery_3 = group >> 25
+        self.mystery_5 = group >> 25
 
         # Evolution parameters
         group = next(data)
+
+        self.mystery_6 = group & 0x1FF
+
         self.evo_parameter_2 = group >> 9 & 0x1FF
         if self.evo_parameter_2 == 0x1FF:
             self.evo_parameter_2 = None
+
+        self.mystery_7 = group >> 18
 
 genders = ["male", "female"]
 
@@ -98,5 +108,9 @@ with open('/tmp/conquest/fsroot/data/Episode.dat', 'rb') as episode_data:
         episodes.append(episode)
 
 if __name__ == "__main__":
-    for warrior in warriors:
-        print("{0:11} {1:05b}".format(warrior.name, warrior.mystery_2))
+    template = ('{n:3} {name:11}  '
+      '{mystery_3:03b} {mystery_2:05b} {mystery_1:05b}  '
+      '{mystery_4:017b}  {mystery_5:07b}  {mystery_7:014b} {mystery_6:09b}')
+
+    for n, warrior in enumerate(warriors):
+        print(template.format(n=n, **warrior.__dict__))
