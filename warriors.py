@@ -1,11 +1,13 @@
-from struct import unpack
+from struct import Struct
 
 from common import decode_name, types
 from pokemon import pokemon
 
 class Warrior():
-    def __init__(self, bytes):
-        data = unpack("<5L", bytes)
+    struct = Struct('<5L')
+
+    def __init__(self, raw_struct):
+        data = self.struct.unpack(raw_struct)
         data = iter(data)
 
         # Link percentage to evolve, name, gender, mystery indexes
@@ -25,23 +27,26 @@ class Warrior():
         except IndexError:
             self.type_2 = None
 
-        self.mystery_1 = group >> 10 & 0x1F
-        self.mystery_2 = group >> 15 & 0x1F
+        self.mystery_type_1 = types[group >> 10 & 0x1F]
+        try:
+            self.mystery_type_2 = types[group >> 15 & 0x1F]
+        except IndexError:
+            self.mystery_type_2 = None
 
-        self.evo_parameter_1 = group >> 20 & 0x1FF
-        if self.evo_parameter_1 == 0x1FF:
-            self.evo_parameter_1 = None
+        self.evo_parameter_1a = group >> 20 & 0x1FF
+        if self.evo_parameter_1a == 0x1FF:
+            self.evo_parameter_1a = None
         else:
-            self.evo_parameter_1 = pokemon[self.evo_parameter_1]
+            self.evo_parameter_1a = pokemon[self.evo_parameter_1a]
 
-        self.mystery_3 = group >> 29
-
-        # Skills and evolution conditions
+        # WarriorSkills and evolution conditions
         group = next(data)
 
-        self.skill = skills[group & 0x7F]
+        self.skill = warrior_skills[group & 0x7F]
 
-        self.mystery_4 = group >> 7 & 0x1FFFF
+        self.mystery_4 = group >> 7 & 0xFF
+
+        self.next_rank = group >> 15 & 0xFF
 
         self.evo_condition_1 = group >> 24 & 0xF
         if self.evo_condition_1 == 0b1101:
@@ -62,29 +67,40 @@ class Warrior():
         # Evolution parameters
         group = next(data)
 
-        self.mystery_6 = group & 0x1FF
+        try:
+            self.evo_parameter_1b = pokemon[group & 0x1FF]
+        except IndexError:
+            self.evo_parameter_1b = self.evo_parameter_1a
 
-        self.evo_parameter_2 = group >> 9 & 0x1FF
-        if self.evo_parameter_2 == 0x1FF:
-            self.evo_parameter_2 = None
+        self.evo_parameter_2a = group >> 9 & 0x1FF
+        if self.evo_parameter_2a == 0x1FF:
+            self.evo_parameter_2a = None
 
-        self.mystery_7 = group >> 18
+        self.evo_parameter_2b = group >> 18 & 0x1FF
+        if self.evo_parameter_2b == 0x1FF:
+            self.evo_parameter_2b = None
+
+class WarriorSkill:
+    struct = Struct('19s9s')
+
+    def __init__(self, raw_struct):
+        self.name, self.mystery = self.struct.unpack(raw_struct)
+        self.name = decode_name(self.name)
 
 genders = ["male", "female"]
 
 with open('/tmp/conquest/fsroot/data/Saihai.dat', 'rb') as skill_data:
-    skills = []
-    for skill in range(73):
-        name, = unpack("19s9x", skill_data.read(28))
-        name = decode_name(name)
-        skills.append(name)
+    warrior_skills = []
+    for warrior_skill in range(73):
+        warrior_skills.append(WarriorSkill(skill_data.read(28)))
 
 with open('/tmp/conquest/fsroot/data/BaseBushou.dat', 'rb') as warrior_data:
     warrior_data.seek(5040)
+    name_struct = Struct('11s1x')
 
     names = []
     for name in range(210):
-        name, = unpack("11s1x", warrior_data.read(12))
+        name, = name_struct.unpack(warrior_data.read(12))
         name = decode_name(name)
         names.append(name)
 
@@ -101,16 +117,20 @@ with open('/tmp/conquest/fsroot/data/BaseBushou.dat', 'rb') as warrior_data:
             warrior_id.append(warrior.name)
 
 with open('/tmp/conquest/fsroot/data/Episode.dat', 'rb') as episode_data:
+    episode_struct = Struct('B7x')
+
     episodes = []
     for episode in range(38):
-        episode, = unpack("B7x", episode_data.read(8))
+        episode, = episode_struct.unpack(episode_data.read(8))
         episode = warrior_id[episode]
         episodes.append(episode)
 
 if __name__ == "__main__":
     template = ('{n:3} {name:11}  '
-      '{mystery_3:03b} {mystery_2:05b} {mystery_1:05b}  '
-      '{mystery_4:017b}  {mystery_5:07b}  {mystery_7:014b} {mystery_6:09b}')
+      '{mystery_4:08b}  {mystery_5:07b}')
 
     for n, warrior in enumerate(warriors):
-        print(template.format(n=n, **warrior.__dict__))
+        try:
+            print(template.format(n=n, **warrior.__dict__))
+        except AttributeError:
+            pass
