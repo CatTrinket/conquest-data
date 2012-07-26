@@ -21,17 +21,17 @@ class Warrior():
         # Mystery bytes, specialties
         group = next(data)
 
-        self.type_1 = types[group & 0x1F]
+        self.types = [types[group & 0x1F]]
         try:
-            self.type_2 = types[group >> 5 & 0x1F]
+            self.types.append(types[group >> 5 & 0x1F])
         except IndexError:
-            self.type_2 = None
+            pass
 
-        self.mystery_type_1 = types[group >> 10 & 0x1F]
+        self.mystery_types = [types[group >> 10 & 0x1F]]
         try:
-            self.mystery_type_2 = types[group >> 15 & 0x1F]
+            self.mystery_types.append(types[group >> 15 & 0x1F])
         except IndexError:
-            self.mystery_type_2 = None
+            pass
 
         self.evo_parameter_1a = group >> 20 & 0x1FF
         if self.evo_parameter_1a == 0x1FF:
@@ -39,7 +39,7 @@ class Warrior():
         else:
             self.evo_parameter_1a = pokemon[self.evo_parameter_1a]
 
-        # WarriorSkills and evolution conditions
+        # Skills and evolution conditions
         group = next(data)
 
         self.skill = warrior_skills[group & 0x7F]

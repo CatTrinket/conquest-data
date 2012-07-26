@@ -48,14 +48,13 @@ class Pokemon:
 
         # Abilities
         group = next(info)
-        for ability in range(1, 4):
-            ability = 'ability_{0}'.format(ability)
+        self.abilities = []
+        for ability in range(3):
             if group & 0x80:
-                setattr(self, ability, None)
-            else:
-                setattr(self, ability, abilities[group & 0x7F])
+                break
+
+            self.abilities.append(abilities[group & 0x7F])
             group >>= 9
-        assert group == 0b01010
 
         # Evolution, range, another mystery flag
         group = next(info)
@@ -72,7 +71,7 @@ class Pokemon:
         self.first_evolution = None if evo == 1400 else evo + 1
         evo = group >> 11 & 0x7FF
         self.last_evolution = None if evo == 1400 else evo + 1
-        self.national_dex_no = group >> 22
+        self.national_id = group >> 22
 
         # Habitat — this is the quad
         group = next(info)
