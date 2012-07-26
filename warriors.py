@@ -116,6 +116,10 @@ with open('/tmp/conquest/fsroot/data/BaseBushou.dat', 'rb') as warrior_data:
         if warrior.name not in warrior_id:
             warrior_id.append(warrior.name)
 
+with open('/tmp/conquest/fsroot/data/BaseBushouMaxSyncTable.dat', 'rb') as link_data:
+    for warrior in warriors:
+        warrior.max_links = dict(zip(pokemon, link_data.read(200)))
+
 with open('/tmp/conquest/fsroot/data/Episode.dat', 'rb') as episode_data:
     episode_struct = Struct('B7x')
 

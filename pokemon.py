@@ -84,6 +84,12 @@ class Pokemon:
         # Alphabetical order
         self.alphabetical_order = next(info)
 
+    def __eq__(self, other):
+        return self.national_id == other.national_id
+
+    def __hash__(self):
+        return self.national_id
+
 pokemon = []
 
 with open('/tmp/conquest/fsroot/data/Pokemon.dat', 'rb') as pokemon_data:
